@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Population Health CFP Tracker</title>
+<style>
+  :root{
+    --ink:#1c2541;
+    --ink-soft:#3a4570;
+    --teal:#2f5f5c;
+    --gilt:#a9812f;
+    --paper:#ede7d9;
+    --paper-card:#f7f3e8;
+    --line:#c9bfa3;
+    --text:#26261f;
+    --text-dim:#5c5647;
+    --open:#2f6b3f;
+    --rolling:#7a5a1e;
+    --closing:#8c2f2f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--text);
+    font-family: 'Iowan Old Style','Georgia',serif;
+    background-image:
+      linear-gradient(var(--paper),var(--paper)),
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px);
+  }
+  .masthead{
+    border-bottom:3px double var(--ink);
+    padding:36px 24px 18px;
+    text-align:center;
+  }
+  .masthead .eyebrow{
+    font-family:'Courier New',monospace;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--teal);
+    margin-bottom:10px;
+  }
+  .masthead h1{
+    font-family:'Iowan Old Style','Palatino',serif;
+    font-weight:700;
+    font-size:clamp(28px,4vw,44px);
+    margin:0 0 8px;
+    color:var(--ink);
+    letter-spacing:0.01em;
+  }
+  .masthead .sub{
+    font-size:14px;
+    color:var(--text-dim);
+    font-style:italic;
+  }
+  .masthead .meta-row{
+    display:flex;justify-content:center;gap:24px;margin-top:14px;
+    font-family:'Courier New',monospace;font-size:11px;color:var(--ink-soft);
+    letter-spacing:0.05em;
+  }
+  .container{max-width:960px;margin:0 auto;padding:28px 20px 80px;}
+
+  .toolbar{
+    display:flex;flex-wrap:wrap;gap:10px;
+    margin-bottom:26px;
+    padding:14px;
+    background:var(--paper-card);
+    border:1px solid var(--line);
+  }
+  .toolbar input[type="text"]{
+    flex:1;min-width:180px;
+    font-family:inherit;font-size:14px;
+    padding:9px 12px;
+    border:1px solid var(--line);
+    background:#fffdf8;
+    color:var(--text);
+  }
+  .toolbar select{
+    font-family:inherit;font-size:13px;
+    padding:9px 10px;
+    border:1px solid var(--line);
+    background:#fffdf8;
+    color:var(--text);
+  }
+  .count-line{
+    font-family:'Courier New',monospace;
+    font-size:11px;
+    color:var(--text-dim);
+    margin-bottom:16px;
+    letter-spacing:0.03em;
+  }
+
+  .card{
+    position:relative;
+    background:var(--paper-card);
+    border:1px solid var(--line);
+    border-left:4px solid var(--teal);
+    padding:18px 20px 16px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s ease, transform .15s ease;
+  }
+  .card:hover{box-shadow:3px 4px 0 rgba(28,37,65,0.08);}
+  .card.status-closing{border-left-color:var(--closing);}
+  .card.status-rolling{border-left-color:var(--gilt);}
+
+  .card-top{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;
+  }
+  .journal-name{
+    font-family:'Courier New',monospace;
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:0.09em;
+    color:var(--teal);
+    margin-bottom:6px;
+  }
+  .cfp-title{
+    font-size:19px;
+    font-weight:700;
+    color:var(--ink);
+    line-height:1.3;
+    margin:0 0 8px;
+  }
+  .deadline-badge{
+    font-family:'Courier New',monospace;
+    font-size:11px;
+    white-space:nowrap;
+    padding:5px 9px;
+    border:1px solid currentColor;
+    letter-spacing:0.03em;
+  }
+  .deadline-badge.open{color:var(--open);}
+  .deadline-badge.rolling{color:var(--rolling);}
+  .deadline-badge.closing{color:var(--closing);}
+
+  .cfp-desc{font-size:14.5px;line-height:1.55;color:var(--text);margin:6px 0 10px;}
+
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+  .tag{
+    font-family:'Courier New',monospace;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    border:1px solid var(--line);
+    padding:2px 7px;
+    background:#fffdf8;
+  }
+  .card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+  .card a.link{
+    font-family:'Courier New',monospace;
+    font-size:12px;
+    color:var(--ink);
+    text-decoration:none;
+    border-bottom:1px solid var(--gilt);
+  }
+  .card a.link:hover{color:var(--gilt);}
+  .verify-note{font-size:11.5px;color:var(--text-dim);font-style:italic;}
+
+  .empty{
+    text-align:center;padding:50px 20px;color:var(--text-dim);font-style:italic;
+  }
+
+  .section-divider{
+    display:flex;align-items:center;gap:14px;margin:46px 0 20px;
+  }
+  .section-divider .line{flex:1;height:1px;background:var(--line);}
+  .section-divider span{
+    font-family:'Courier New',monospace;font-size:12px;letter-spacing:0.12em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+
+  .monitor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media(max-width:640px){.monitor-grid{grid-template-columns:1fr;}}
+  .monitor-card{
+    background:var(--paper-card);border:1px solid var(--line);padding:16px 18px;
+  }
+  .monitor-card h3{margin:0 0 6px;font-size:15px;color:var(--ink);}
+  .monitor-card p{margin:0 0 10px;font-size:13px;color:var(--text-dim);line-height:1.5;}
+  .monitor-card a{font-family:'Courier New',monospace;font-size:12px;color:var(--teal);}
+
+  .howto{
+    background:#fffdf8;border:1px solid var(--line);padding:20px 22px;font-size:14px;line-height:1.7;color:var(--text);
+  }
+  .howto ol{margin:10px 0 0;padding-left:20px;}
+  .howto li{margin-bottom:8px;}
+  .howto code{background:var(--paper);padding:1px 5px;font-family:'Courier New',monospace;font-size:12.5px;}
+
+  footer{
+    text-align:center;padding:30px 20px 50px;
+    font-family:'Courier New',monospace;font-size:11px;color:var(--text-dim);
+  }
+
+  .update-banner{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    flex-wrap:wrap;
+    background:var(--ink);
+    color:var(--paper-card);
+    padding:10px 16px;
+    font-family:'Courier New',monospace;
+    font-size:12.5px;
+    letter-spacing:0.03em;
+    text-align:center;
+  }
+  .update-banner strong{color:#e8d9a8;font-weight:700;}
+  .update-banner .dot{opacity:0.5;}
+</style>
+</head>
+<body>
+
+<!--
+  MANUAL UPDATE NOTE FOR MAINTAINERS:
+  This page does not update itself. When you refresh the list of calls for
+  papers, update the LAST_UPDATED constant near the top of the <script>
+  block below (search for "LAST_UPDATED ="). That single change updates
+  both the banner and the masthead date shown to visitors.
+-->
+<div class="update-banner">
+  <span>🗓 <strong>Last updated: <span id="bannerDate">—</span></strong></span>
+  <span class="dot">·</span>
+  <span>This page is maintained manually — it is not a live feed</span>
+</div>
+
+<div class="masthead">
+  <h1>Calls for Papers</h1>
+  <div class="sub">A running index of open calls from public health &amp; population health journals</div>
+  <div class="meta-row">
+    <span id="lastUpdated">COMPILED: —</span>
+    <span>·</span>
+    <span id="totalCount">— ENTRIES —</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="toolbar">
+    <input type="text" id="searchBox" placeholder="Search by keyword, topic, or journal…">
+    <select id="journalFilter"><option value="">All journals</option></select>
+    <select id="statusFilter">
+      <option value="">All statuses</option>
+      <option value="open">Open</option>
+      <option value="rolling">Rolling / ongoing</option>
+      <option value="closing">Closing soon</option>
+    </select>
+  </div>
+
+  <div class="count-line" id="countLine"></div>
+  <div id="cardList"></div>
+  <div class="empty" id="emptyState" style="display:none;">No calls match your filters. Try clearing a filter above.</div>
+
+  <div class="section-divider"><div class="line"></div><span>Keep this list current</span><div class="line"></div></div>
+
+  <div class="howto">
+    <strong>This page is a snapshot, not a live feed.</strong> I compiled it from journal websites on July 10, 2026 — I don't have a way to auto-refresh it on a schedule. Two easy ways to keep it current:
+    <ol>
+      <li><strong>Ask me to refresh it.</strong> Come back to Claude periodically (monthly works well) and ask me to re-search these journals and update the list — I'll rebuild this page with what's newly posted and flag what's closed.</li>
+      <li><strong>Set up standing alerts</strong> so new calls reach the department automatically between refreshes — see the sources below. Most publishers post calls for papers on a dedicated page with no email sign-up, so an RSS reader (e.g., Feedly, Inoreader) or a saved-search Google Alert for <code>"call for papers" public health</code> catches things faster than checking manually.</li>
+    </ol>
+  </div>
+
+  <div class="section-divider"><div class="line"></div><span>Journal sources to monitor</span><div class="line"></div></div>
+
+  <div class="monitor-grid" id="monitorGrid"></div>
+
+  <div class="section-divider"><div class="line"></div><span>Other calls-for-papers finders</span><div class="line"></div></div>
+
+  <div class="howto">
+    <ol>
+      <li><strong>JournalTOCs</strong> (<code>www.journaltocs.ac.uk</code>) — lets you set up free table-of-contents RSS alerts across most public health journals in one place; searchable by subject.</li>
+      <li><strong>Wiley, Elsevier, Springer Nature, and Taylor &amp; Francis</strong> all maintain "Calls for Papers" landing pages by subject area (Medicine &amp; Public Health) that can be bookmarked and checked on a rotation.</li>
+      <li><strong>APHA / American Public Health Association newsletters</strong> (Inside Public Health) frequently announce AJPH calls before they hit the website.</li>
+      <li><strong>X/Bluesky and LinkedIn accounts</strong> for target journals often post calls before the website is updated — worth a light follow if a few key journals matter most to your department.</li>
+    </ol>
+  </div>
+
+</div>
+
+<footer>Data compiled via web search, July 10, 2026 · Verify deadlines directly with each journal before submitting</footer>
+
+<script>
+// ---- UPDATE THIS DATE EACH TIME YOU REFRESH THE LIST BELOW ----
+const LAST_UPDATED = "July 10, 2026";
+// -----------------------------------------------------------------
+
+const cfps = [
+  {
+    journal: "American Journal of Public Health (AJPH)",
+    title: "Beyond the Image: Photovoice as Method, Meaning, and Movement in Public Health",
+    desc: "Launches AJPH's new Photovoice manuscript type — participatory research combining photography and narrative to advance public health practice, policy, and systems change at any level.",
+    deadline: "Due July 15, 2026",
+    status: "closing",
+    tags: ["methodology","community-engaged research","photovoice"],
+    link: "https://ajph.aphapublications.org/callforpapers"
+  },
+  {
+    journal: "American Journal of Public Health (AJPH)",
+    title: "Intergenerational Relationships and Healthy Aging (joint call with Journal of Women & Aging)",
+    desc: "Seeks research on how intergenerational relationships influence population health and what public health interventions can optimize healthy aging within and across generations.",
+    deadline: "Rolling — see journal page",
+    status: "rolling",
+    tags: ["aging","health equity","population health"],
+    link: "https://ajph.aphapublications.org/callforpapers"
+  },
+  {
+    journal: "American Journal of Public Health (AJPH)",
+    title: "Rural Health and Social Inequities (special section)",
+    desc: "Innovative strategies addressing persistent public health inequities in rural America and how geography shapes opportunity and health outcomes.",
+    deadline: "Posted deadline May 1, 2026 — confirm status",
+    status: "closing",
+    tags: ["rural health","health equity"],
+    link: "https://ajph.aphapublications.org/callforpapers"
+  },
+  {
+    journal: "American Journal of Public Health (AJPH)",
+    title: "OBRA '87 at 40: Quality and Equity in Residential and Community-Based Care",
+    desc: "Marking the 40th anniversary of the Nursing Home Reform Act (OBRA '87); research on how quality and equity in residential and community-based care have changed for older adults and people with disabilities.",
+    deadline: "Posted deadline June 1, 2026 — confirm status",
+    status: "closing",
+    tags: ["aging","long-term care","disability"],
+    link: "https://ajph.aphapublications.org/callforpapers"
+  },
+  {
+    journal: "American Journal of Public Health (AJPH)",
+    title: "AJPH Student Think Tank (2026 cohort)",
+    desc: "Ongoing call for student-led submissions on how public health education and workforce development can respond to evolving challenges, including misinformation and funding cuts.",
+    deadline: "Rolling cohort call",
+    status: "rolling",
+    tags: ["workforce","education","student research"],
+    link: "https://ajph.aphapublications.org/callforpapers"
+  },
+  {
+    journal: "BMC Global and Public Health",
+    title: "Improving Maternal Health in Underserved Populations",
+    desc: "Collection guest-edited by Dr. Tamar Kabakian-Khasholian exploring interventions and research to improve maternal health outcomes among underserved populations.",
+    deadline: "Rolling submissions",
+    status: "rolling",
+    tags: ["maternal health","health equity"],
+    link: "https://link.springer.com/journal/44263/collections?filter=Open"
+  },
+  {
+    journal: "BMC Global and Public Health",
+    title: "Addressing Health Disparities in Minority Populations",
+    desc: "Collection exploring multifaceted challenges faced by sexual, racial, and other minority populations in accessing equitable health care and outcomes.",
+    deadline: "Rolling submissions",
+    status: "rolling",
+    tags: ["health equity","minority health"],
+    link: "https://link.springer.com/journal/44263/collections?filter=Open"
+  },
+  {
+    journal: "BMC Global and Public Health",
+    title: "Cohort Profiles for Global Public Health Research",
+    desc: "Standing collection for cohort study profiles, recognizing the role of longitudinal cohorts in advancing global public health evidence.",
+    deadline: "Rolling submissions",
+    status: "rolling",
+    tags: ["cohort studies","methodology"],
+    link: "https://link.springer.com/journal/44263/collections"
+  },
+  {
+    journal: "BMC Global and Public Health",
+    title: "Factors Shaping Population Well-Being and Resilience Across the Life Course",
+    desc: "Collection on well-being and resilience as populations live longer, with a life-course framing.",
+    deadline: "Rolling submissions",
+    status: "rolling",
+    tags: ["life course","well-being"],
+    link: "https://link.springer.com/journal/44263/collections"
+  },
+  {
+    journal: "BMC Global and Public Health",
+    title: "Health Conditions Associated with Urbanization",
+    desc: "Collection on identifying and addressing health conditions linked to rapid urbanization as global populations increasingly concentrate in cities.",
+    deadline: "Rolling submissions",
+    status: "rolling",
+    tags: ["urbanization","chronic disease"],
+    link: "https://link.springer.com/journal/44263/collections"
+  },
+  {
+    journal: "Health & Place (Elsevier)",
+    title: "Place, Aging, and Cognition",
+    desc: "Special issue on how contextual factors in the physical and social places where we live influence aging and cognition across diverse populations and settings.",
+    deadline: "See ScienceDirect page for current deadline",
+    status: "open",
+    tags: ["aging","built environment","cognition"],
+    link: "https://www.sciencedirect.com/journal/health-and-place/about/call-for-papers"
+  },
+  {
+    journal: "Public Health in Practice (Elsevier)",
+    title: "Novel Practices in Health Improvement Across Micro, Meso, and Macro Levels",
+    desc: "Interested especially in papers from practitioners developing methods for reaching traditionally under-served populations, and interventions addressing health inequalities across the life course.",
+    deadline: "See ScienceDirect page for current deadline",
+    status: "open",
+    tags: ["health inequalities","practice-based research"],
+    link: "https://www.sciencedirect.com/journal/public-health-in-practice/about/call-for-papers"
+  },
+  {
+    journal: "Journal of the Georgia Public Health Association (JGPHA)",
+    title: "Systems Evolution: Optimizing Public Health Delivery Through Technology, Data, Research, Community and Workforce Adaptation",
+    desc: "Special issue covering AI-enabled surveillance, mHealth for underserved communities, digital health literacy in workforce training, and data interoperability standards.",
+    deadline: "Rolling review through September 29, 2026",
+    status: "open",
+    tags: ["digital health","workforce","data systems"],
+    link: "https://www.gapha.org/call-for-papers-journal-of-the-georgia-public-health-association-2026-special-issue/"
+  },
+  {
+    journal: "Journal of Community Medicine and Health Sciences (JCMHS)",
+    title: "General Call — Public Health, Preventive Medicine & Community-Based Research",
+    desc: "Standing, open-access call for manuscripts on public health, preventive medicine, community-based research, and population health management across diverse settings and geographies.",
+    deadline: "Rolling; next issue cutoff varies quarterly",
+    status: "rolling",
+    tags: ["preventive medicine","community-based research"],
+    link: "https://www.communitymedjournal.com/jcmhs/call-for-papers"
+  }
+];
+
+const monitorSources = [
+  {name:"AJPH — Calls for Papers", desc:"APHA's own live index of every current AJPH call, abstract request, and featured section.", url:"https://ajph.aphapublications.org/callforpapers"},
+  {name:"BMC Global and Public Health — Collections", desc:"Springer Nature's rolling list of open collections; filter by 'Open' to see what's currently accepting.", url:"https://link.springer.com/journal/44263/collections?filter=Open"},
+  {name:"ScienceDirect — Public Health journals", desc:"Search 'call for papers' within Elsevier's public-health-adjacent titles (Health & Place, Public Health in Practice, SSM–Population Health, Preventive Medicine).", url:"https://www.sciencedirect.com/search?qs=call%20for%20papers%20public%20health"},
+  {name:"PLOS Collections", desc:"PLOS Global Public Health and PLOS Medicine post themed collection calls here as they open.", url:"https://collections.plos.org/"},
+  {name:"The Lancet Public Health", desc:"Check the journal's 'For authors' / announcements section for themed issue calls.", url:"https://www.thelancet.com/journals/lanpub/home"},
+  {name:"JMIR Public Health and Surveillance", desc:"Digital-health-forward public health journal; posts themed issue announcements on its site.", url:"https://publichealth.jmir.org/announcements"}
+];
+
+function statusLabel(s){
+  if(s==="open") return "OPEN";
+  if(s==="rolling") return "ROLLING";
+  if(s==="closing") return "CHECK STATUS";
+  return s.toUpperCase();
+}
+
+function render(){
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  const journal = document.getElementById('journalFilter').value;
+  const status = document.getElementById('statusFilter').value;
+
+  const filtered = cfps.filter(c=>{
+    const hay = (c.title+" "+c.desc+" "+c.journal+" "+c.tags.join(" ")).toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(journal && c.journal !== journal) return false;
+    if(status && c.status !== status) return false;
+    return true;
+  });
+
+  const list = document.getElementById('cardList');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('countLine').textContent = `Showing ${filtered.length} of ${cfps.length} open or rolling calls`;
+
+  if(filtered.length===0){
+    list.innerHTML='';
+    empty.style.display='block';
+    return;
+  }
+  empty.style.display='none';
+
+  list.innerHTML = filtered.map(c=>`
+    <div class="card status-${c.status}">
+      <div class="card-top">
+        <div>
+          <div class="journal-name">${c.journal}</div>
+          <h3 class="cfp-title">${c.title}</h3>
+        </div>
+        <div class="deadline-badge ${c.status}">${c.deadline}</div>
+      </div>
+      <p class="cfp-desc">${c.desc}</p>
+      <div class="tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="card-foot">
+        <a class="link" href="${c.link}" target="_blank" rel="noopener">View call on journal site →</a>
+        <span class="verify-note">Status: ${statusLabel(c.status)} · verify deadline before submitting</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// populate journal filter
+const journalSelect = document.getElementById('journalFilter');
+[...new Set(cfps.map(c=>c.journal))].sort().forEach(j=>{
+  const opt = document.createElement('option');
+  opt.value=j; opt.textContent=j;
+  journalSelect.appendChild(opt);
+});
+
+document.getElementById('searchBox').addEventListener('input', render);
+journalSelect.addEventListener('change', render);
+document.getElementById('statusFilter').addEventListener('change', render);
+
+document.getElementById('totalCount').textContent = `${cfps.length} ENTRIES`;
+document.getElementById('bannerDate').textContent = LAST_UPDATED;
+document.getElementById('lastUpdated').textContent = `COMPILED: ${LAST_UPDATED.toUpperCase()}`;
+
+// monitor grid
+document.getElementById('monitorGrid').innerHTML = monitorSources.map(m=>`
+  <div class="monitor-card">
+    <h3>${m.name}</h3>
+    <p>${m.desc}</p>
+    <a href="${m.url}" target="_blank" rel="noopener">${m.url.replace('https://','')}</a>
+  </div>
+`).join('');
+
+render();
+</script>
+
+</body>
+</html>
